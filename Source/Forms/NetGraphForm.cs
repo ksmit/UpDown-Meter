@@ -8,8 +8,15 @@ using System.Windows.Forms;
 namespace ScriptFUSION.UpDown_Meter {
     public partial class NetGraphForm : Form {
         private Options options;
+
         private NetworkInterfaceSampler sampler;
+
         private TrayIconIllustrator trayIconIllustrator;
+
+        /// <summary>
+        /// Icon displayed in the system tray when the connection is dormant.
+        /// </summary>
+        private static Icon dormantIcon;
 
         /// <summary>
         /// Point at which the user starts dragging the form.
@@ -19,18 +26,18 @@ namespace ScriptFUSION.UpDown_Meter {
         public NetGraphForm() {
             InitializeComponent();
 
+            Text = UdmApplication.ProductName;
+
             toolbox.BackColor = BackColor.Desaturate(.15f).Darken(.14f);
 
             sampler = netGraph.Sampler = new NetworkInterfaceSampler();
             sampler.SampleAdded += Sampler_SampleAdded;
 
             Options = new Options(Settings.Default);
+            ApplyLoadTimeOptions();
 
             trayIconIllustrator = new TrayIconIllustrator();
-            trayIcon.Icon = new Icon(Properties.Resources.udm, SystemInformation.SmallIconSize);  
-
-            // Timer does not fire at start-up so trigger manually.
-            timer_Tick(null, null);
+            UpdateTrayIcon();
         }
 
         /// <summary>
@@ -43,14 +50,14 @@ namespace ScriptFUSION.UpDown_Meter {
             {
                 options = value;
 
-                SyncOptionsWithSampler(value);
-                SyncOptionsWithUI(value);
+                SyncSamplerOptions(value);
+                SyncUiOptions(value);
             }
         }
 
         private Sample LastSample
         {
-            get { return sampler.First(); }
+            get { return sampler.FirstOrDefault(); }
         }
 
         private IEnumerable<Sample> LatestSamples
@@ -70,10 +77,21 @@ namespace ScriptFUSION.UpDown_Meter {
 
         private bool IsConnectionDormant
         {
-            get { return LastSample.Max < 1000 && AverageDownloadSpeed < 1000 && AverageUploadSpeed < 1000; }
+            get { return LastSample == null || LastSample.Max < 1000 && AverageDownloadSpeed < 1000 && AverageUploadSpeed < 1000; }
         }
 
-        private void SyncOptionsWithSampler(Options options) {
+        private void ApplyLoadTimeOptions() {
+            if (!Options.Bounds.Location.IsEmpty) {
+                StartPosition = FormStartPosition.Manual;
+                Location = Options.Bounds.Location;
+            }
+
+            if (!Options.LoadHidden) {
+                Show();
+            }
+        }
+
+        private void SyncSamplerOptions(Options options) {
             var nic = sampler.NetworkInterface = options.NetworkInterface;
 
             sampler.MaximumSpeed = options.NicSpeeds.ContainsKey(nic?.Id ?? string.Empty) ? options.NicSpeeds[nic.Id] : 0;
@@ -81,14 +99,11 @@ namespace ScriptFUSION.UpDown_Meter {
             nicSpeed.Text = Math.Round(sampler.MaximumSpeed / 1000f).ToString("0 kB/s");
         }
 
-        private void SyncOptionsWithUI(Options options) {
-            if (!options.Bounds.Location.IsEmpty) {
-                StartPosition = FormStartPosition.Manual;
-                Location = options.Bounds.Location;
-            }
+        private void SyncUiOptions(Options options) {
+            if (options.Topmost && !topmost.Selected) topmost.SimulateClick();
+            if (options.Transparent && !transparent.Selected) transparent.SimulateClick();
 
-            if (options.Topmost) topmost.SimulateClick();
-            if (options.Transparent) transparent.SimulateClick();
+            toolTip.Active = options.Tooltips;
         }
 
         private void UpdateStats() {
@@ -116,7 +131,7 @@ namespace ScriptFUSION.UpDown_Meter {
 
             if (IsConnectionDormant || sampler.MaximumSpeed == 0) {
                 // Use application icon.
-                trayIcon.Icon = Icon;
+                trayIcon.Icon = CreateDormantIcon();
             }
             else {
                 // Draw new icon.
@@ -126,10 +141,20 @@ namespace ScriptFUSION.UpDown_Meter {
                 );
             }
 
-            // Dispose of old icon unless it's the application icon.
-            if (oldIcon != null && oldIcon != Icon) {
-                oldIcon.Dispose();
+            if (oldIcon != dormantIcon) {
+                oldIcon?.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Creates an icon to be displayed when the connection is dormant.
+        /// </summary>
+        /// <remarks>
+        /// The system tray is unable to select the most appropriate icon size for itself so this method gives it the
+        /// little extra help it needs to not completely suck.
+        /// </remarks>
+        private Icon CreateDormantIcon() {
+            return dormantIcon = dormantIcon ?? new Icon(Icon, 16, 16);
         }
 
         private void ToggleWindowVisibility() {
@@ -139,6 +164,10 @@ namespace ScriptFUSION.UpDown_Meter {
         }
 
         private bool CanSnap(int clientEdge, int containerEdge, int tension) {
+            if (!Options.Docking) {
+                return false;
+            }
+
             const int DOCK_DISTANCE = 10;
 
             return Math.Abs(clientEdge - containerEdge) <= DOCK_DISTANCE && Math.Abs(tension) <= DOCK_DISTANCE;
@@ -146,31 +175,27 @@ namespace ScriptFUSION.UpDown_Meter {
 
         #region Event handlers
 
-        private void timer_Tick(object sender, EventArgs e) {
-            sampler.SampleAdapter();
-        }
-
         private void close_Click(object sender, EventArgs e) {
             Close();
         }
 
         private void minimize_Click(object sender, EventArgs e) {
-            Visible = false;
+            Hide();
         }
 
         private void topmost_Click(object sender, EventArgs e) {
-            TopMost = topmost.Selected = topmostMenuItem.Checked = options.Topmost =
+            TopMost = topmost.Selected = topmostMenuItem.Checked = Options.Topmost =
                 sender == topmost ? topmost.Selected : topmostMenuItem.Checked;
 
-            options.Save();
+            Options.Save();
         }
 
         private void transparent_Click(object sender, EventArgs e) {
-            Opacity = (transparent.Selected = transparencyMenuItem.Checked = options.Transparent =
+            Opacity = (transparent.Selected = transparencyMenuItem.Checked = Options.Transparent =
                 sender == transparent ? transparent.Selected : transparencyMenuItem.Checked
             ) ? .4 : 1;
 
-            options.Save();
+            Options.Save();
         }
 
         private void reset_Click(object sender, EventArgs e) {
@@ -180,6 +205,7 @@ namespace ScriptFUSION.UpDown_Meter {
         private void settings_Click(object sender, EventArgs e) {
             using (var optionsForm = new OptionsForm(Options.Clone())) {
                 optionsForm.Icon = Icon;
+                optionsForm.TopMost = TopMost;
                 optionsForm.ApplyOptions += (_, options) => {
                     Options = options.Clone();
                 };
@@ -191,13 +217,17 @@ namespace ScriptFUSION.UpDown_Meter {
         }
 
         private void trayIcon_MouseClick(object sender, MouseEventArgs e) {
-            if ((e.Button & MouseButtons.Left) > 0) {
+            if (e.Button.HasFlag(MouseButtons.Left)) {
                 ToggleWindowVisibility();
             }
         }
 
         private void showMenuItem_Click(object sender, EventArgs e) {
             ToggleWindowVisibility();
+        }
+
+        private void homePageMenuItem_Click(object sender, EventArgs e) {
+            System.Diagnostics.Process.Start("https://github.com/ScriptFUSION/UpDown-Meter");
         }
 
         private void Sampler_SampleAdded(NetworkInterfaceSampler sampler, Sample sample) {
@@ -211,14 +241,14 @@ namespace ScriptFUSION.UpDown_Meter {
 
         private void NetGraphForm_MouseDown(object sender, MouseEventArgs e) {
             // Record drag start location.
-            if ((e.Button & MouseButtons.Left) > 0) {
+            if (e.Button.HasFlag(MouseButtons.Left)) {
                 dragPoint = e.Location;
             }
         }
 
         private void NetGraphForm_MouseMove(object sender, MouseEventArgs e) {
             // Drag form.
-            if ((e.Button & MouseButtons.Left) > 0) {
+            if (e.Button.HasFlag(MouseButtons.Left)) {
                 var container = Screen.FromRectangle(Bounds).WorkingArea;
                 var x = Location.X + e.X - dragPoint.X;
                 var y = Location.Y + e.Y - dragPoint.Y;
@@ -257,9 +287,9 @@ namespace ScriptFUSION.UpDown_Meter {
         }
 
         private void NetGraphForm_FormClosed(object sender, FormClosedEventArgs e) {
-            options.Bounds = Bounds;
+            Options.Bounds = Bounds;
 
-            options.Save();
+            Options.Save();
         }
 
         #endregion

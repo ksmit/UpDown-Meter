@@ -12,11 +12,13 @@ namespace ScriptFUSION.UpDown_Meter {
         public Options(Settings settings) {
             this.settings = settings;
 
-            NetworkInterface = NetworkInterfaces.Fetch(settings.LastNic);
-            NicSpeeds = settings.NicSpeeds;
-            Bounds = settings.Bounds;
-            Topmost = settings.Topmost;
-            Transparent = settings.Transparent;
+            // Import settings from previous version.
+            if (!settings.Upgraded) {
+                settings.Upgrade();
+                settings.Upgraded = true;
+            }
+
+            Load();
         }
 
         public NetworkInterface NetworkInterface { get; set; }
@@ -29,11 +31,28 @@ namespace ScriptFUSION.UpDown_Meter {
 
         public bool Transparent { get; set; }
 
+        public bool Docking { get; set; }
+
+        public bool LoadHidden { get; set; }
+
+        public bool Tooltips { get; set; }
+
         public Options Clone() {
             var clone = (Options)MemberwiseClone();
             clone.NicSpeeds = new Dictionary<string, ulong>(NicSpeeds);
 
             return clone;
+        }
+
+        private void Load() {
+            NetworkInterface = NetworkInterfaces.Fetch(settings.LastNic);
+            NicSpeeds = settings.NicSpeeds;
+            Bounds = settings.Bounds;
+            Topmost = settings.Topmost;
+            Transparent = settings.Transparent;
+            Docking = settings.Docking;
+            LoadHidden = settings.LoadHidden;
+            Tooltips = settings.Tooltips;
         }
 
         public void Save() {
@@ -42,6 +61,9 @@ namespace ScriptFUSION.UpDown_Meter {
             settings.Bounds = Bounds;
             settings.Topmost = Topmost;
             settings.Transparent = Transparent;
+            settings.Docking = Docking;
+            settings.LoadHidden = LoadHidden;
+            settings.Tooltips = Tooltips;
 
             settings.Save();
         }

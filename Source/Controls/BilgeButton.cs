@@ -7,12 +7,18 @@ using System.Windows.Forms;
 namespace ScriptFUSION.UpDown_Meter.Controls {
     [DefaultEvent("Click")]
     public partial class BilgeButton : Control {
-        private bool mouseDown, mouseOver, selected;
+        private bool mouseDown, mouseOver, selected, frozen;
 
         public Image Image { get; set; }
 
         [DefaultValue(false)]
         public bool ToggleButton { get; set; }
+
+        /// <summary>
+        /// True to syncronize freeze state with selected state, otherwise false.
+        /// </summary>
+        [DefaultValue(false)]
+        public bool FreezeOnSelect { get; set; }
 
         [DefaultValue(false)]
         public bool Selected
@@ -21,7 +27,25 @@ namespace ScriptFUSION.UpDown_Meter.Controls {
             set
             {
                 selected = value;
+
+                if (FreezeOnSelect) {
+                    Frozen = value;
+                }
+
                 Invalidate();
+            }
+        }
+
+        [DefaultValue(false)]
+        public bool Frozen
+        {
+            get { return frozen; }
+            set
+            {
+                if ((frozen = value) == false) {
+                    // Force button to revert mouse over state.
+                    IsMouseOver = false;
+                }
             }
         }
 
@@ -57,6 +81,10 @@ namespace ScriptFUSION.UpDown_Meter.Controls {
         }
 
         protected override void OnPaint(PaintEventArgs e) {
+            if (DesignMode) {
+                ControlPaint.DrawBorder(e.Graphics, ClientRectangle, ForeColor, ButtonBorderStyle.Dashed);
+            }
+
             if (Image == null) return;
 
             var imageX = Width / 2 - Image.Width / 2;
@@ -88,6 +116,13 @@ namespace ScriptFUSION.UpDown_Meter.Controls {
             e.Graphics.DrawImageTranslucent(Image, Selected ? 1 : .75f, imageX - offset, imageY - offset);
         }
 
+        protected override void OnClick(EventArgs e) {
+            // Only allow left clicks and simulated clicks to raise click event.
+            if ((e as MouseEventArgs)?.Button.HasFlag(MouseButtons.Left) ?? true) {
+                base.OnClick(e);
+            }
+        }
+
         private void BilgeButton_Click(object sender, EventArgs e) {
             if (ToggleButton) {
                 Selected = !Selected;
@@ -95,7 +130,9 @@ namespace ScriptFUSION.UpDown_Meter.Controls {
         }
 
         private void BilgeButton_MouseEnter(object sender, EventArgs e) {
-            IsMouseOver = true;
+            if (!Frozen) {
+                IsMouseOver = true;
+            }
         }
 
         private void BilgeButton_MouseLeave(object sender, EventArgs e) {
@@ -103,13 +140,13 @@ namespace ScriptFUSION.UpDown_Meter.Controls {
         }
 
         private void BilgeButton_MouseDown(object sender, MouseEventArgs e) {
-            if ((e.Button & MouseButtons.Left) > 0) {
+            if (e.Button.HasFlag(MouseButtons.Left)) {
                 IsMouseDown = true;
             }
         }
 
         private void BilgeButton_MouseUp(object sender, MouseEventArgs e) {
-            if ((e.Button & MouseButtons.Left) > 0) {
+            if (e.Button.HasFlag(MouseButtons.Left)) {
                 IsMouseDown = false;
             }
         }

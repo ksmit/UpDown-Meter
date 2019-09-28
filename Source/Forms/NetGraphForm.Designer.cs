@@ -25,17 +25,23 @@
         private void InitializeComponent() {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(NetGraphForm));
-            this.timer = new System.Windows.Forms.Timer(this.components);
             this.toolbox = new System.Windows.Forms.FlowLayoutPanel();
+            this.close = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
+            this.minimize = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
+            this.topmost = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
+            this.transparent = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
+            this.reset = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
+            this.settings = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
             this.trayIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.trayMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.showMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.settingsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.optionsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.topmostMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.transparencyMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.resetMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.homePageMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusBar = new System.Windows.Forms.TableLayoutPanel();
             this.dlRaw = new System.Windows.Forms.Label();
@@ -46,24 +52,13 @@
             this.ulRaw = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.ulAvg = new System.Windows.Forms.Label();
-            this.close = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
-            this.minimize = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
-            this.topmost = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
-            this.transparent = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
-            this.reset = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
-            this.settings = new ScriptFUSION.UpDown_Meter.Controls.BilgeButton();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.nicSpeed = new ScriptFUSION.UpDown_Meter.Controls.VerticalLabel();
             this.netGraph = new ScriptFUSION.UpDown_Meter.Controls.NetGraph();
             this.toolbox.SuspendLayout();
             this.trayMenu.SuspendLayout();
             this.statusBar.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // timer
-            // 
-            this.timer.Enabled = true;
-            this.timer.Interval = 1000;
-            this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
             // toolbox
             // 
@@ -78,8 +73,77 @@
             this.toolbox.Controls.Add(this.settings);
             this.toolbox.Location = new System.Drawing.Point(315, 1);
             this.toolbox.Name = "toolbox";
+            this.toolbox.Padding = new System.Windows.Forms.Padding(0, 1, 0, 1);
             this.toolbox.Size = new System.Drawing.Size(15, 102);
             this.toolbox.TabIndex = 7;
+            // 
+            // close
+            // 
+            this.close.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.exit;
+            this.close.Location = new System.Drawing.Point(1, 2);
+            this.close.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
+            this.close.Name = "close";
+            this.close.Size = new System.Drawing.Size(13, 13);
+            this.close.TabIndex = 0;
+            this.toolTip.SetToolTip(this.close, "Close");
+            this.close.Click += new System.EventHandler(this.close_Click);
+            // 
+            // minimize
+            // 
+            this.minimize.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.minimize;
+            this.minimize.Location = new System.Drawing.Point(1, 16);
+            this.minimize.Margin = new System.Windows.Forms.Padding(1);
+            this.minimize.Name = "minimize";
+            this.minimize.Size = new System.Drawing.Size(13, 13);
+            this.minimize.TabIndex = 1;
+            this.toolTip.SetToolTip(this.minimize, "Minimize");
+            this.minimize.Click += new System.EventHandler(this.minimize_Click);
+            // 
+            // topmost
+            // 
+            this.topmost.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.topmost;
+            this.topmost.Location = new System.Drawing.Point(1, 31);
+            this.topmost.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
+            this.topmost.Name = "topmost";
+            this.topmost.Size = new System.Drawing.Size(13, 13);
+            this.topmost.TabIndex = 2;
+            this.topmost.ToggleButton = true;
+            this.toolTip.SetToolTip(this.topmost, "Always on top");
+            this.topmost.Click += new System.EventHandler(this.topmost_Click);
+            // 
+            // transparent
+            // 
+            this.transparent.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.transparent;
+            this.transparent.Location = new System.Drawing.Point(1, 45);
+            this.transparent.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
+            this.transparent.Name = "transparent";
+            this.transparent.Size = new System.Drawing.Size(13, 13);
+            this.transparent.TabIndex = 3;
+            this.transparent.ToggleButton = true;
+            this.toolTip.SetToolTip(this.transparent, "Transparency");
+            this.transparent.Click += new System.EventHandler(this.transparent_Click);
+            // 
+            // reset
+            // 
+            this.reset.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.refresh;
+            this.reset.Location = new System.Drawing.Point(1, 59);
+            this.reset.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
+            this.reset.Name = "reset";
+            this.reset.Size = new System.Drawing.Size(13, 12);
+            this.reset.TabIndex = 4;
+            this.toolTip.SetToolTip(this.reset, "Clear graph");
+            this.reset.Click += new System.EventHandler(this.reset_Click);
+            // 
+            // settings
+            // 
+            this.settings.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.settings;
+            this.settings.Location = new System.Drawing.Point(1, 72);
+            this.settings.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
+            this.settings.Name = "settings";
+            this.settings.Size = new System.Drawing.Size(13, 13);
+            this.settings.TabIndex = 4;
+            this.toolTip.SetToolTip(this.settings, "Options");
+            this.settings.Click += new System.EventHandler(this.settings_Click);
             // 
             // trayIcon
             // 
@@ -92,17 +156,18 @@
             // 
             this.trayMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.showMenuItem,
-            this.settingsMenuItem,
+            this.optionsMenuItem,
             this.toolStripSeparator1,
             this.topmostMenuItem,
             this.transparencyMenuItem,
             this.resetMenuItem,
             this.toolStripSeparator2,
+            this.homePageMenuItem,
             this.exitMenuItem});
             this.trayMenu.Name = "contextMenuStrip1";
             this.trayMenu.ShowCheckMargin = true;
             this.trayMenu.ShowImageMargin = false;
-            this.trayMenu.Size = new System.Drawing.Size(227, 148);
+            this.trayMenu.Size = new System.Drawing.Size(227, 170);
             // 
             // showMenuItem
             // 
@@ -112,12 +177,12 @@
             this.showMenuItem.Text = "&Show/Hide UpDown Meter";
             this.showMenuItem.Click += new System.EventHandler(this.showMenuItem_Click);
             // 
-            // settingsMenuItem
+            // optionsMenuItem
             // 
-            this.settingsMenuItem.Name = "settingsMenuItem";
-            this.settingsMenuItem.Size = new System.Drawing.Size(226, 22);
-            this.settingsMenuItem.Text = "S&ettings...";
-            this.settingsMenuItem.Click += new System.EventHandler(this.settings_Click);
+            this.optionsMenuItem.Name = "optionsMenuItem";
+            this.optionsMenuItem.Size = new System.Drawing.Size(226, 22);
+            this.optionsMenuItem.Text = "&Options...";
+            this.optionsMenuItem.Click += new System.EventHandler(this.settings_Click);
             // 
             // toolStripSeparator1
             // 
@@ -144,13 +209,20 @@
             // 
             this.resetMenuItem.Name = "resetMenuItem";
             this.resetMenuItem.Size = new System.Drawing.Size(226, 22);
-            this.resetMenuItem.Text = "&Reset";
+            this.resetMenuItem.Text = "Clea&r graph";
             this.resetMenuItem.Click += new System.EventHandler(this.reset_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
             this.toolStripSeparator2.Size = new System.Drawing.Size(223, 6);
+            // 
+            // homePageMenuItem
+            // 
+            this.homePageMenuItem.Name = "homePageMenuItem";
+            this.homePageMenuItem.Size = new System.Drawing.Size(226, 22);
+            this.homePageMenuItem.Text = "&Home page";
+            this.homePageMenuItem.Click += new System.EventHandler(this.homePageMenuItem_Click);
             // 
             // exitMenuItem
             // 
@@ -291,67 +363,9 @@
             this.ulAvg.Text = "0";
             this.ulAvg.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // close
+            // toolTip
             // 
-            this.close.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.exit;
-            this.close.Location = new System.Drawing.Point(1, 2);
-            this.close.Margin = new System.Windows.Forms.Padding(1, 2, 1, 0);
-            this.close.Name = "close";
-            this.close.Size = new System.Drawing.Size(13, 13);
-            this.close.TabIndex = 0;
-            this.close.Click += new System.EventHandler(this.close_Click);
-            // 
-            // minimize
-            // 
-            this.minimize.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.minimize;
-            this.minimize.Location = new System.Drawing.Point(1, 16);
-            this.minimize.Margin = new System.Windows.Forms.Padding(1);
-            this.minimize.Name = "minimize";
-            this.minimize.Size = new System.Drawing.Size(13, 13);
-            this.minimize.TabIndex = 1;
-            this.minimize.Click += new System.EventHandler(this.minimize_Click);
-            // 
-            // topmost
-            // 
-            this.topmost.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.topmost;
-            this.topmost.Location = new System.Drawing.Point(1, 31);
-            this.topmost.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
-            this.topmost.Name = "topmost";
-            this.topmost.Size = new System.Drawing.Size(13, 13);
-            this.topmost.TabIndex = 2;
-            this.topmost.ToggleButton = true;
-            this.topmost.Click += new System.EventHandler(this.topmost_Click);
-            // 
-            // transparent
-            // 
-            this.transparent.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.transparent;
-            this.transparent.Location = new System.Drawing.Point(1, 45);
-            this.transparent.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
-            this.transparent.Name = "transparent";
-            this.transparent.Size = new System.Drawing.Size(13, 13);
-            this.transparent.TabIndex = 3;
-            this.transparent.ToggleButton = true;
-            this.transparent.Click += new System.EventHandler(this.transparent_Click);
-            // 
-            // reset
-            // 
-            this.reset.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.refresh;
-            this.reset.Location = new System.Drawing.Point(1, 59);
-            this.reset.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
-            this.reset.Name = "reset";
-            this.reset.Size = new System.Drawing.Size(13, 12);
-            this.reset.TabIndex = 4;
-            this.reset.Click += new System.EventHandler(this.reset_Click);
-            // 
-            // settings
-            // 
-            this.settings.Image = global::ScriptFUSION.UpDown_Meter.Properties.Resources.settings;
-            this.settings.Location = new System.Drawing.Point(1, 72);
-            this.settings.Margin = new System.Windows.Forms.Padding(1, 1, 1, 0);
-            this.settings.Name = "settings";
-            this.settings.Size = new System.Drawing.Size(13, 13);
-            this.settings.TabIndex = 4;
-            this.settings.Click += new System.EventHandler(this.settings_Click);
+            this.toolTip.AutomaticDelay = 700;
             // 
             // nicSpeed
             // 
@@ -394,7 +408,6 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "NetGraphForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "NetGraphForm";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.NetGraphForm_FormClosed);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.NetGraphForm_Paint);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.NetGraphForm_MouseDown);
@@ -410,7 +423,6 @@
 
         #endregion
         private Controls.NetGraph netGraph;
-        private System.Windows.Forms.Timer timer;
         private Controls.VerticalLabel nicSpeed;
         private System.Windows.Forms.FlowLayoutPanel toolbox;
         private Controls.BilgeButton close;
@@ -422,7 +434,7 @@
         private System.Windows.Forms.NotifyIcon trayIcon;
         private System.Windows.Forms.ContextMenuStrip trayMenu;
         private System.Windows.Forms.ToolStripMenuItem showMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem settingsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem optionsMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem topmostMenuItem;
         private System.Windows.Forms.ToolStripMenuItem transparencyMenuItem;
@@ -438,5 +450,7 @@
         private System.Windows.Forms.Label ulRaw;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label ulAvg;
+        private System.Windows.Forms.ToolStripMenuItem homePageMenuItem;
+        private System.Windows.Forms.ToolTip toolTip;
     }
 }

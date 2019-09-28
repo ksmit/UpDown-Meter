@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ScriptFUSION.UpDown_Meter.Controls;
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -7,18 +9,29 @@ using System.Windows.Forms;
 
 namespace ScriptFUSION.UpDown_Meter {
     public partial class OptionsForm : Form {
+        private RegistryPersister registry;
+
+        internal OptionsForm(Options options) {
+            Options = options;
+            registry = new RegistryPersister(new RegistryOptions());
+
+            InitializeComponent();
+            version.Text = string.Format(version.Text, UdmApplication.CanonicalProductVersion);
+
+            LoadNetworkInterfaces();
+            LoadSettings();
+
+            // Load default page.
+            networking.SimulateClick();
+        }
+
         internal Options Options { get; private set; }
+
+        private RegistryOptions RegistryOptions { get { return registry.Options; } }
 
         private NetworkInterface SelectedNic
         {
             get { return (NetworkInterface)nics.SelectedItems.Cast<ListViewItem>().FirstOrDefault()?.Tag; }
-        }
-
-        internal OptionsForm(Options options) {
-            Options = options;
-
-            InitializeComponent();
-            LoadNetworkInterfaces();
         }
 
         internal delegate void ApplyOptionsDelegate(OptionsForm sender, Options options);
@@ -26,11 +39,38 @@ namespace ScriptFUSION.UpDown_Meter {
         internal event ApplyOptionsDelegate ApplyOptions;
 
         private void SaveSettings() {
-            if (SelectedNic != null) {
+            if ((Options.NetworkInterface = SelectedNic) != null) {
+                // TODO: Validate text before parsing.
                 Options.NicSpeeds[SelectedNic.Id] = ulong.Parse(customSpeed.Text);
             }
 
+            Options.LoadHidden = loadHidden.Checked;
+            Options.Docking = docking.Checked;
+            Options.Tooltips = tooltips.Checked;
+
             Options.Save();
+
+            SaveRegistrySettings();
+        }
+
+        private void SaveRegistrySettings() {
+            RegistryOptions.LoadAtSystemStartup = loadSystem.Checked;
+
+            registry.Save();
+        }
+
+        private void LoadSettings() {
+            loadHidden.Checked = Options.LoadHidden;
+            docking.Checked = Options.Docking;
+            tooltips.Checked = Options.Tooltips;
+
+            LoadRegistrySettings();
+        }
+
+        private void LoadRegistrySettings() {
+            registry.Load();
+
+            loadSystem.Checked = RegistryOptions.LoadAtSystemStartup;
         }
 
         private void LoadNetworkInterfaces() {
@@ -49,6 +89,8 @@ namespace ScriptFUSION.UpDown_Meter {
                             stats.BytesReceived.ToString(),
                             stats.BytesSent.ToString(),
                         });
+
+                        // Store NetworkInterface because querying NICs is an expensive operation.
                         item.Tag = nic;
 
                         if (nic.OperationalStatus != OperationalStatus.Up) {
@@ -68,14 +110,9 @@ namespace ScriptFUSION.UpDown_Meter {
         }
 
         private void SelectCurrentNetworkInterface() {
-            if (Options.NetworkInterface != null) {
-                foreach (ListViewItem nic in nics.Items) {
-                    if (((NetworkInterface)nic.Tag).Id == Options.NetworkInterface.Id) {
-                        nic.Selected = true;
-                        break;
-                    }
-                }
-            }
+            nics.Items.Cast<ListViewItem>()
+                .Where(item => ((NetworkInterface)item.Tag).Id == Options.NetworkInterface?.Id)
+                .ToList().ForEach(item => item.Selected = true);
         }
 
         #region Event handlers
@@ -97,8 +134,6 @@ namespace ScriptFUSION.UpDown_Meter {
         }
 
         private void nics_SelectedIndexChanged(object sender, EventArgs e) {
-            Options.NetworkInterface = SelectedNic;
-
             detectedSpeed.Text = (SelectedNic?.Speed / 8).ToString();
             customSpeed.Text = SelectedNic != null && Options.NicSpeeds.ContainsKey(SelectedNic.Id)
                 ? Options.NicSpeeds[SelectedNic.Id].ToString()
@@ -113,16 +148,28 @@ namespace ScriptFUSION.UpDown_Meter {
             customSpeed.Text = detectedSpeed.Text;
         }
 
-        private void OptionsForm_Paint(object sender, PaintEventArgs e) {
-            // Draw header border.
-            ControlPaint.DrawBorder3D(e.Graphics, new Rectangle(0, header.Bottom + 1, Width, 2), Border3DStyle.SunkenOuter);
+        private void pagingButton_Click(object sender, EventArgs e) {
+            var clickedButton = sender as BilgeButton;
+            var map = new Dictionary<BilgeButton, DockedPanel>() {
+                { networking, networkingPage },
+                { options, optionsPage },
+            };
 
-            // Draw footer border.
-            ControlPaint.DrawBorder3D(
-                e.Graphics,
-                new Rectangle(0, ok.Top - (ClientRectangle.Height - ok.Bottom) - 2, Width, 2),
-                Border3DStyle.SunkenOuter
-            );
+            foreach (var button in footer.Controls.Cast<Control>().OfType<BilgeButton>()) {
+                button.Selected = false;
+            }
+            clickedButton.Selected = true;
+
+            pages.SelectedPanel = map[clickedButton];
+            title.Text = clickedButton.Text;
+        }
+
+        private void header_Paint(object sender, PaintEventArgs e) {
+            ControlPaint.DrawBorder3D(e.Graphics, new Rectangle(0, header.Bottom - 2, Width, 2), Border3DStyle.SunkenOuter);
+        }
+
+        private void footer_Paint(object sender, PaintEventArgs e) {
+            ControlPaint.DrawBorder3D(e.Graphics, new Rectangle(0, 0, Width, 2), Border3DStyle.SunkenOuter);
         }
 
         #endregion
